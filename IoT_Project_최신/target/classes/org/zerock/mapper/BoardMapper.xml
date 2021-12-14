@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.zerock.mapper.BoardMapper">
+
+	<select id="getList" resultType="org.zerock.domain.BoardVO">
+		<![CDATA[
+			select * from board where type = 'notice' order by bno desc
+		]]>
+	</select>
+
+	<!-- PAGE 190 create(INSERT) -->
+	<!-- insert 문이 처리되고 생성된 PK값을 알 필요가 없는 경우 -->
+	<insert id="insert">
+		insert into board (bno, title, content, writer, type)
+		values (seq_board.nextval, #{title}, #{content}, #{writer}, #{type}) 
+	</insert>
+
+	<!-- insert 문이 실행되고 생성된 PK값을 알아야 하는 경우 -->
+	<insert id="insertSelectKey">
+		<selectKey keyProperty="bno" order="BEFORE"
+			resultType="long">
+			select seq_board.nextval from dual
+		</selectKey>
+		insert into board (bno, title, content, writer, type)
+		values (#{bno}, #{title}, #{content}, #{writer}, #{type})
+	</insert>
+
+	<!-- PAGE 190 read(SELECT) -->
+	<select id="read" resultType="org.zerock.domain.BoardVO">
+		select * from board where bno = #{bno}
+	</select>
+
+	<!-- PAGE 195 delete -->
+	<delete id="delete">
+		delete from board where bno = #{bno}
+	</delete>
+
+	<!-- PAGE 196 update -->
+	<update id="update">
+		update board
+		set title = #{title},
+		content = #{content , jdbcType=CLOB},
+		writer = #{writer},
+		updatedate = sysdate
+		where bno = #{bno}
+	</update>
+
+
+	<!-- Page 294 getListWithPaging -->
+	<select id="getListWithPaging"
+		resultType="org.zerock.domain.BoardVO">
+		<![CDATA[
+			select
+   				bno, title, content, writer, type, regdate, updatedate, viewcnt, replycnt
+			from
+				(
+					select /*+INDEX_DESC(board pk_board)) */
+    					rownum rn, bno, title, content, writer, type, regdate, updatedate, viewcnt, replycnt
+					from board
+					where
+		]]>
+		<if test='type!=null and !type.equals("")'>
+		   type = #{type} and	
+   		</if>
+		<include refid="criteria" />
+	
+		<![CDATA[			
+					rownum <= #{pageNum} * #{amount}
+				)
+			where rn > (#{pageNum} - 1 ) * #{amount}
+		]]>
+		
+	</select>
+	
+	<!-- Page 322 MyBatis에서 전체 데이터의 개수 처리 -->
+	<select id="getTotalCount" resultType="int">
+		select count(*) from board where
+		<include refid="criteria"/>
+		bno > 0
+		<if test='type!=null and !type.equals("")'>
+		   and type = #{type}	
+   		</if>
+	</select>
+	
+	<!-- 조회 수 업데이트 -->
+	<update id="updateViewCnt">
+			update board set viewcnt = viewcnt + 1 where bno = #{bno}
+	</update>
+	
+	
+	<!-- 댓글 수 업데이트 -->
+	<update id="updateReplyCnt">
+		update board set replycnt = replycnt + #{amount} where bno = #{bno}
+	</update>
+	
+	
+	
+	<!-- Page 338 <sql> <include>와 검색데이터의 개수 처리 -->
+	<!-- 
+			sql태그 
+			→ SQL의 일부를 별도로 보관하고 필요한경우에 id값을 매개로 include해서 재사용
+	 -->
+	<sql id="criteria">
+		<trim prefix="(" suffix=") AND " prefixOverrides="OR">
+			<foreach item='typeSearch' collection="typeArr">
+				<trim prefix="OR">
+					<choose>
+						<when test="typeSearch == 'T'.toString">
+							title like '%'||#{keyword}||'%'
+						</when>
+						<when test="typeSearch == 'C'.toString">
+							content like '%'||#{keyword}||'%'
+						</when>
+						<when test="typeSearch == 'W'.toString">
+							writer like '%'||#{keyword}||'%'
+						</when>
+					</choose>
+				</trim>
+			</foreach>
+		</trim>
+	</sql>
+
+
+
+</mapper>

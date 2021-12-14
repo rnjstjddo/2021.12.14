@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+	
+<mapper namespace="org.zerock.mapper.MemberMapper">
+
+	<resultMap type="org.zerock.domain.MemberVO" id="memberMap">
+		<id property="userId" column="userid"/>
+		<result property="userId" column="userid"/>
+		<result property="userName" column="username"/>
+		<result property="userPw" column="userpw"/>
+		<result property="userEmail" column="useremail"/>
+		<result property="userGender" column="usergender"/>
+		<result property="number1" column="num1"/>
+		<result property="number2" column="num2"/>
+		<result property="number3" column="num3"/>
+		<result property="userAddress1" column="useraddress1"/>
+		<result property="userAddress2" column="useraddress2"/>
+		<result property="enabled" column="enabled"/>
+		<result property="regDate" column="regdate"/>
+		<!-- <result property="updateDate" column="updatedate"/> -->
+		<collection property="authList" resultMap="authMap"/>
+	</resultMap>
+	
+	<resultMap type="org.zerock.domain.AuthVO" id="authMap">
+		<result property="userId" column="userid"/>
+		<result property="userAuth" column="userauth"/>
+	</resultMap>
+	
+	<select id="read" resultMap="memberMap">
+		select mem.userid, userpw, username, enabled, regdate, userauth
+		from membervo mem left outer join authvo auth 
+				on mem.userid=auth.userid
+		where mem.userid=#{userId}
+	</select>
+	
+	<insert id="insertMember">
+		insert into membervo(userid,username,userpw,useremail,usergender,num1,num2,num3,useraddress1,useraddress2,regdate)
+			values(#{userId},#{userName},#{userPw},#{userEmail},#{userGender},#{number1},#{number2},#{number3},#{userAddress1},#{userAddress2},sysdate)		
+	</insert>
+	<insert id="insertMemberAuth">
+		insert into authvo(userid,userauth)
+			values(#{userId},'ROLE_MEMBER')
+	</insert>
+	
+	<select id="checkID">
+		select userid from membervo where userid=#{userId}
+	</select>
+	
+	
+</mapper>
+

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.zerock.mapper.ReplyMapper">
+
+	<!-- Page 382 CRUD 작업 - 등록 -->
+	<insert id="insert">
+		insert into reply (rno, bno, reply, replyer)
+		values (seq_reply.nextval, #{bno}, #{reply}, #{replyer})
+	</insert>
+
+
+	<!-- Page 384 CRUD 작업 - 조회 -->
+	<select id="read" resultType="org.zerock.domain.ReplyVO">
+		select * from reply where rno = #{rno}
+	</select>
+	
+	<select id="read2" resultType="org.zerock.domain.ReplyVO">
+		select * from reply where bno = #{bno}
+	</select>
+	
+	
+	<!-- Page 386 CRUD 작업 - 삭제 -->
+	<delete id="delete">
+		delete from reply where rno = #{rno}
+	</delete>
+	
+	<delete id="delete2">
+		delete from reply where bno = #{bno}
+	</delete>
+	
+	<!-- Page 386 CRUD 작업 - 수정 -->
+	<update id="update">
+		update reply set reply = #{reply}, replyer = #{replyer}, updatedate = sysdate where rno = #{rno}
+	</update>
+	
+ 
+ 	<!-- Page 430 인덱스를 이용한 페이징 쿼리 (댓글목록) -->
+ 	<select id="getListWithPaging" resultType="org.zerock.domain.ReplyVO">
+		<![CDATA[
+		select rno, bno, reply, replyer, replydate, updatedate
+		from
+			(
+				select /*+ INDEX(a idx_reply) */
+  				  rownum rn, bno, rno, reply, replyer, replyDate, updateDate
+				from reply a
+				where bno = #{bno}
+				and rno > 0
+				and rownum <= #{cri.pageNum} * #{cri.amount} 
+			)
+		where rn > (#{cri.pageNum} - 1) * #{cri.amount} 
+		]]>
+	</select>
+	
+	
+	<!-- Page 432 댓글의 숫자 파악 -->
+	<select id="getCountByBno" resultType="int">
+		<![CDATA[
+			select count(rno) from reply where bno = #{bno}
+		]]>
+	</select>
+	
+ 
+</mapper> 
